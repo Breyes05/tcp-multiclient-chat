@@ -1,0 +1,40 @@
+# Build artifacts
+*.o
+*.obj
+*.so
+*.exe
+*.out
+*.a
+*.dylib
+
+# Compiled binaries
+server
+client
+
+# Debug / temporary files
+*.log
+*.tmp
+*.swp
+*~
+
+# VS Code settings
+.vscode/
+*.code-workspace
+
+# MacOS system files
+.DS_Store
+
+# CMake (if you use it)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Other IDE/project files
+*.idea/
+*.user
+*.suo
+*.ncb
+*.sdf
+*.vcxproj*
+*.xcodeproj
