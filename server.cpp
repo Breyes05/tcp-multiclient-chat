@@ -17,12 +17,29 @@
 
 #define PORT 8080
 
+// Reads data, echos message back to client and closes
+void handle_client(int client_fd) {
+    char buffer[1024] = { 0 };
+    while (true) {
+        int bytes_read = read(client_fd, buffer, sizeof(buffer));
+        if (bytes_read <= 0) {
+            break;
+        }   
+        std::cout << "Message from client: " << buffer << "\n";
+        send(client_fd, buffer, bytes_read, 0);
+    }
+    close(client_fd);
+}
+
+
 int main()
 {
     int server_fd, new_socket;
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
+    std::vector<int> clients;
+    std::mutex clients_mutex;
 
     // Create TCP socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,27 +66,18 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    // Accept connection
-    new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-    if (new_socket < 0) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-    }
-
-    // Continuously read data, echo messages back to client
-    char buffer[1024] = { 0 };
+    // Accept connections, thread for each client
     while (true) {
-        int bytes_read = read(new_socket, buffer, 1024);
-        if (bytes_read <= 0) {
-            break;
-        }   
-        std::cout << "Message from client: " << buffer << "\n";
-        send(new_socket, buffer, bytes_read, 0);
+        new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+        if (new_socket < 0) {
+            perror("accept");
+            exit(EXIT_FAILURE);
+        }
+        std::thread t(handle_client, new_socket);
+        t.detach();
     }
 
     // Close socket
-    close(new_socket);
     close(server_fd);
     return 0;
 }
-

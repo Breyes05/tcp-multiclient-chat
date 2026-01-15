@@ -1,21 +1,42 @@
-#include <arpa/inet.h>
-#include <netinet/in.h>
+// Networking
 #include <sys/socket.h>
-#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
+// System
+#include <unistd.h>
 #include <cstring>
+#include <cerrno>
+
+// C++ standard library
 #include <iostream>
+#include <string>
+#include <vector>
+#include <thread>
+#include <mutex>
 
 #define PORT 8080
 
+// Reader Thread calls recv() and prints the message from the server
+void reader_loop(int sock) {
+    char buffer[1024] = {0};
+    while (true) {
+        int bytes_received = read(sock, buffer, sizeof(buffer) - 1);
+        if (bytes_received <= 0) {
+            break;
+        }
+        buffer[bytes_received] = '\0';
+        std::cout << "Echo from server: " << buffer << "\n";
+        std::cout.flush();
+    }
+}
+
+// Writer Thread to send inputs to server
 int main() {
-    int sock = 0;
     struct sockaddr_in serv_addr;
-    const char *hello = "Hello from client";
-    const char *message_two = "This is my second message";
 
     // Create socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         std::cerr << "Socket creation error" << std::endl;
         return -1;
@@ -36,25 +57,16 @@ int main() {
         return -1;
     }
 
-    // Send data
-    send(sock, hello, strlen(hello), 0);
-    std::cout << "Message sent\n";
+    std::thread(reader_loop, sock).detach(); // thread reader_loop
 
-    // ECHO CLIENT RECEIVE ORIGINAL MESSAGE
-    char buffer[1024] = {0};
-    int bytes_received = read(sock, buffer, sizeof(buffer));
-    if (bytes_received > 0) {
-        std::cout << "Echo from server: " << buffer << "\n";
-    }
-
-    // Send data again
-    send(sock, message_two, strlen(message_two), 0);
-    std::cout << "Message 2 sent\n";
-
-    // ECHO CLIENT RECEIVE ORIGINAL MESSAGE
-    bytes_received = read(sock, buffer, sizeof(buffer));
-    if (bytes_received > 0) {
-        std::cout << "Echo from server: " << buffer << "\n";
+    std::string client_msg;
+    while (true) {
+        std::cout << "> ";
+        std::getline(std::cin, client_msg);
+        if (client_msg.empty()) {
+            continue;
+        }
+        send(sock, client_msg.c_str(), client_msg.size(), 0);
     }
 
     // Close socket
@@ -62,10 +74,11 @@ int main() {
     return 0;
 }
 
+
 /*
 Compile files
-g++ -o server server.cpp
-g++ -o client client.cpp
+g++ -std=c++17 -pthread -o server server.cpp
+g++ -std=c++17 -pthread -o client client.cpp
 
 Run server
 ./server
@@ -73,3 +86,12 @@ Run server
 Run client in another terminal
 ./client
 */
+
+// Step 1: Separate client and server responsibilities
+// Server receives message from one client, server sends to other clients
+
+// Step 2: Define a message format (protocol)
+
+// Step 3: Handle multiple clients
+
+// Step 4: Handle disconnections
