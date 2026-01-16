@@ -21,12 +21,13 @@
 void reader_loop(int sock) {
     char buffer[1024] = {0};
     while (true) {
-        int bytes_received = read(sock, buffer, sizeof(buffer) - 1);
+        ssize_t bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes_received <= 0) {
             break;
         }
         buffer[bytes_received] = '\0';
-        std::cout << "Echo from server: " << buffer << "\n";
+        std::cout << buffer << "\n";
+        std::cout << "> ";
         std::cout.flush();
     }
 }
@@ -87,11 +88,3 @@ Run client in another terminal
 ./client
 */
 
-// Step 1: Separate client and server responsibilities
-// Server receives message from one client, server sends to other clients
-
-// Step 2: Define a message format (protocol)
-
-// Step 3: Handle multiple clients
-
-// Step 4: Handle disconnections
